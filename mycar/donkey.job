@@ -1,0 +1,8 @@
+#!/bin/bash
+#SBATCH --job-name="Donkey car training with SLURM"
+#SBATCH --time=02:00:00
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:tesla:1
+
+donkey train --tub ./data/*
+
