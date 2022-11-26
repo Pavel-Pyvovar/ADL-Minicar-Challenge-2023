@@ -8,6 +8,30 @@
 # The update operation will not touch this file.
 # """
 
+MM1_STEERING_MID = 1525
+MM1_MAX_FORWARD = 1620  # Max is 2000
+MM1_MAX_REVERSE = 1350
+MM1_STOPPED_PWM = 1500
+MM1_SHOW_STEERING_VALUE = False
+MM1_SERIAL_PORT = '/dev/ttyS0'
+
+THROTTLE_FORWARD_PWM = 430      #pwm value for max forward throttle
+THROTTLE_STOPPED_PWM = 370      #pwm value for no movement
+THROTTLE_REVERSE_PWM = 320      #pwm value for max reverse throttle
+
+DRIVE_TRAIN_TYPE = "MM1"
+
+JOYSTICK_MAX_THROTTLE = 1.0
+JOYSTICK_THROTTLE_DIR = -1.0
+
+CONTROLLER_TYPE='F710'           #(ps3|ps4)
+DRIVE_LOOP_HZ = 20
+
+if (CONTROLLER_TYPE=='F710'):
+    JOYSTICK_DEADZONE = 0.1
+
+AUTO_CREATE_NEW_TUB = True
+
 # import os
 # 
 # #PATHS
@@ -610,10 +634,10 @@
 # STOP_SIGN_SHOW_BOUNDING_BOX = True
 # STOP_SIGN_MAX_REVERSE_COUNT = 10    # How many times should the car reverse when detected a stop sign, set to 0 to disable reversing
 # STOP_SIGN_REVERSE_THROTTLE = -0.5     # Throttle during reversing when detected a stop sign
-#
-# # Pedestrian Detector
-# PEDESTRIAN_DETECTOR = True
 # 
+# # Pedestrian Detector
+PEDESTRIAN_DETECTOR = True
+#
 # # FPS counter
-# SHOW_FPS = False
+SHOW_FPS = True
 # FPS_DEBUG_INTERVAL = 10    # the interval in seconds for printing the frequency info into the shell
