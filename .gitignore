@@ -136,3 +136,6 @@ mycar/models
 
 # Slurm log files
 slurm-[0-9]*.out
+
+# PyCharm files
+.idea/
