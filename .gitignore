@@ -133,3 +133,6 @@ mycar/data
 
 # Models
 mycar/models
+
+# PyCharm files
+.idea/
