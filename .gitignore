@@ -139,3 +139,6 @@ slurm-[0-9]*.out
 
 # PyCharm files
 .idea/
+
+# macOS files
+.DS_Store
