@@ -449,10 +449,14 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
                     user_angle, user_throttle,
                     pilot_angle, pilot_throttle):
             if mode == 'user':
+                # user_throttle = 0
                 return user_angle, user_throttle
 
             elif mode == 'local_angle':
-                return pilot_angle if pilot_angle else 0.0, user_throttle
+                angle = pilot_angle if pilot_angle else 0.0
+                throttle = user_throttle if pilot_throttle else 0.0
+                return angle, throttle
+                # return pilot_angle if pilot_angle else 0.0, user_throttle
 
             else:
                 return pilot_angle if pilot_angle else 0.0, \
