@@ -406,9 +406,7 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
     if cfg.STOP_SIGN_DETECTOR:
         from donkeycar.parts.object_detector.stop_sign_detector \
             import StopSignDetector
-        V.add(StopSignDetector(cfg.STOP_SIGN_MIN_SCORE,
-                               cfg.STOP_SIGN_SHOW_BOUNDING_BOX,
-                               cfg.STOP_SIGN_MAX_REVERSE_COUNT,
+        V.add(StopSignDetector(cfg.STOP_SIGN_MAX_REVERSE_COUNT,
                                cfg.STOP_SIGN_REVERSE_THROTTLE),
               inputs=['cam/image_array', 'pilot/throttle'],
               outputs=['pilot/throttle', 'cam/image_array'])

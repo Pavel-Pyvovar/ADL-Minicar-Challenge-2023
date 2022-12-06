@@ -12,16 +12,16 @@ import pdb
 
 class PedestrianDetector(object):
     '''
-    This part will run a simple CNN model to run object detection to detect a lego pedestrians on a zebra crossing.
+    This part will run a simple CNN model to detect a lego pedestrians on a zebra crossing.
     '''
 
-    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/pedestrian_detector_v2.0"
+    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/pedestrian_detector_v2.0.tflite"
     threshold = 0.7
 
     def __init__(self, max_reverse_count=0, reverse_throttle=-0.5):
         # model related
         #self.model = tf.keras.models.load_model(model_path)
-        self.interpreter = tf.lite.Interpreter(model_path=model_path)
+        self.interpreter = tf.lite.Interpreter(model_path=self.model_path)
         self.interpreter.allocate_tensors()
 
         self.input_details = self.interpreter.get_input_details()
@@ -33,7 +33,7 @@ class PedestrianDetector(object):
         self.reverse_throttle = reverse_throttle
         self.is_reversing = False
 
-    def model_predict(input_data):
+    def model_predict(self, input_data):
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
         self.interpreter.invoke()
         return self.interpreter.get_tensor(self.output_details[0]['index'])

@@ -3,12 +3,11 @@ import cv2
 import time
 import random
 import collections
-from edgetpu.detection.engine import DetectionEngine
-from edgetpu.utils import dataset_utils
 from PIL import Image
 from matplotlib import cm
 import os
 import urllib.request
+import tensorflow as tf
 
 
 class StopSignDetector(object):
@@ -19,28 +18,17 @@ class StopSignDetector(object):
     We are just using a pre-trained model (MobileNet V2 SSD) provided by Google.
     '''
 
-    def download_file(self, url, filename):
-        if not os.path.isfile(filename):
-            urllib.request.urlretrieve(url, filename)
+    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/stop_sign_detector.tflite"
+    threshold = 0.7
 
-    def __init__(self, min_score, show_bounding_box, max_reverse_count=0, reverse_throttle=-0.5, debug=False):
-        MODEL_FILE_NAME = "ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite"
-        LABEL_FILE_NAME = "coco_labels.txt"
+    def __init__(self, max_reverse_count=0, reverse_throttle=-0.5):
+        # model related
+        #self.model = tf.keras.models.load_model(model_path)
+        self.interpreter = tf.lite.Interpreter(model_path=self.model_path)
+        self.interpreter.allocate_tensors()
 
-        MODEL_URL = "https://github.com/google-coral/edgetpu/raw/master/test_data/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite"
-        LABEL_URL = "https://dl.google.com/coral/canned_models/coco_labels.txt"
-
-        self.download_file(MODEL_URL, MODEL_FILE_NAME)
-        self.download_file(LABEL_URL, LABEL_FILE_NAME)
-
-        self.last_5_scores = collections.deque(np.zeros(5), maxlen=5)
-        self.engine = DetectionEngine(MODEL_FILE_NAME)
-        self.labels = dataset_utils.read_label_file(LABEL_FILE_NAME)
-
-        self.STOP_SIGN_CLASS_ID = 12
-        self.min_score = min_score
-        self.show_bounding_box = show_bounding_box
-        self.debug = debug
+        self.input_details = self.interpreter.get_input_details()
+        self.output_details = self.interpreter.get_output_details()
 
         # reverse throttle related
         self.max_reverse_count = max_reverse_count
@@ -48,79 +36,42 @@ class StopSignDetector(object):
         self.reverse_throttle = reverse_throttle
         self.is_reversing = False
 
-    def convertImageArrayToPILImage(self, img_arr):
-        img = Image.fromarray(img_arr.astype('uint8'), 'RGB')
+    def model_predict(self, input_data):
+        self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
+        self.interpreter.invoke()
+        return self.interpreter.get_tensor(self.output_details[0]['index'])
 
-        return img
+    def apply_normalization(self, cv_image_rgb_uint8):
+        mean, std = (
+            np.array([0.4251, 0.4787, 0.4311]),
+            np.array([0.2203, 0.2276, 0.2366])
+        )
+        image = np.float32(cv_image_rgb_uint8) / 255.0
+        image -= mean
+        image /= std
+        return image
 
-    '''
-    Return an object if there is a traffic light in the frame
-    '''
-    def detect_stop_sign (self, img_arr):
-        img = self.convertImageArrayToPILImage(img_arr)
-
-        ans = self.engine.detect_with_image(img,
-                                          threshold=self.min_score,
-                                          keep_aspect_ratio=True,
-                                          relative_coord=False,
-                                          top_k=3)
-        max_score = 0
-        traffic_light_obj = None
-        if ans:
-            for obj in ans:
-                if (obj.label_id == self.STOP_SIGN_CLASS_ID):
-                    if self.debug:
-                        print("stop sign detected, score = {}".format(obj.score))
-                    if (obj.score > max_score):
-                        print(obj.bounding_box)
-                        traffic_light_obj = obj
-                        max_score = obj.score
-
-        # if traffic_light_obj:
-        #     self.last_5_scores.append(traffic_light_obj.score)
-        #     sum_of_last_5_score = sum(list(self.last_5_scores))
-        #     # print("sum of last 5 score = ", sum_of_last_5_score)
-
-        #     if sum_of_last_5_score > self.LAST_5_SCORE_THRESHOLD:
-        #         return traffic_light_obj
-        #     else:
-        #         print("Not reaching last 5 score threshold")
-        #         return None
-        # else:
-        #     self.last_5_scores.append(0)
-        #     return None
-
-        return traffic_light_obj
-
-    def draw_bounding_box(self, traffic_light_obj, img_arr):
-        xmargin = (traffic_light_obj.bounding_box[1][0] - traffic_light_obj.bounding_box[0][0]) *0.1
-
-        traffic_light_obj.bounding_box[0][0] = traffic_light_obj.bounding_box[0][0] + xmargin
-        traffic_light_obj.bounding_box[1][0] = traffic_light_obj.bounding_box[1][0] - xmargin
-
-        ymargin = (traffic_light_obj.bounding_box[1][1] - traffic_light_obj.bounding_box[0][1]) *0.05
-
-        traffic_light_obj.bounding_box[0][1] = traffic_light_obj.bounding_box[0][1] + ymargin
-        traffic_light_obj.bounding_box[1][1] = traffic_light_obj.bounding_box[1][1] - ymargin
-
-        cv2.rectangle(img_arr, tuple(traffic_light_obj.bounding_box[0].astype(int)),
-                        tuple(traffic_light_obj.bounding_box[1].astype(int)), (0, 255, 0), 2)
+    def detect_stop_sign(self, img):
+        img = self.apply_normalization(img)
+        #prediction = self.model.predict(np.array([img]))
+        prediction = self.model_predict(np.array([img]))
+        return prediction[0][0] > self.threshold
 
     def run(self, img_arr, throttle, debug=False):
         if img_arr is None:
             return throttle, img_arr
 
-        # Detect traffic light object
-        traffic_light_obj = self.detect_stop_sign(img_arr)
+        stop_signs_detected = self.detect_stop_sign(img_arr)
+        if stop_signs_detected:
+            print(f"Stop sign detected {stop_signs_detected}")
 
-        if traffic_light_obj or self.is_reversing:
-            if self.show_bounding_box and traffic_light_obj != None:
-                self.draw_bounding_box(traffic_light_obj, img_arr)
-            
-            # Set the throttle to reverse within the max reverse count when detected the traffic light object
+        if stop_signs_detected or self.is_reversing:
+
+            # Set the throttle to reverse within the max reverse count when detected pedestrians on a zebra crossing
             if self.reverse_count < self.max_reverse_count:
                 self.is_reversing = True
                 self.reverse_count += 1
+                # print(f"Reverse throttle {self.reverse_throttle}")
                 return self.reverse_throttle, img_arr
             else:
                 self.is_reversing = False
@@ -128,4 +79,5 @@ class StopSignDetector(object):
         else:
             self.is_reversing = False
             self.reverse_count = 0
+            # print(f"Last throttle {throttle}")
             return throttle, img_arr
