@@ -429,6 +429,19 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
               outputs=['pilot/throttle'])
 
     #
+    # Give way to a car on the right
+    #
+    if cfg.CAR_DETECTOR:
+        from donkeycar.parts.object_detector.car_detector \
+            import CarDetector
+        V.add(CarDetector(),
+              inputs=['cam/image_array', 'pilot/throttle'],
+              outputs=['pilot/throttle', 'cam/image_array'])
+        V.add(ThrottleFilter(), 
+              inputs=['pilot/throttle'],
+              outputs=['pilot/throttle'])
+
+    #
     # to give the car a boost when starting ai mode in a race.
     # This will also override the stop sign detector so that
     # you can start at a stop sign using launch mode, but
@@ -447,7 +460,7 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
                     user_angle, user_throttle,
                     pilot_angle, pilot_throttle):
             if mode == 'user':
-                # user_throttle = 0
+                user_throttle = 0
                 return user_angle, user_throttle
 
             elif mode == 'local_angle':

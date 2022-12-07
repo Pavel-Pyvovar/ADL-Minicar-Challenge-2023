@@ -635,8 +635,11 @@ STOP_SIGN_SHOW_BOUNDING_BOX = False
 STOP_SIGN_MAX_REVERSE_COUNT = 10    # How many times should the car reverse when detected a stop sign, set to 0 to disable reversing
 STOP_SIGN_REVERSE_THROTTLE = -0.5     # Throttle during reversing when detected a stop sign
 
-# # Pedestrian Detector
+# Pedestrian Detector
 PEDESTRIAN_DETECTOR = False
+
+# Car Detector
+CAR_DETECTOR = False
 #
 # # FPS counter
 SHOW_FPS = True

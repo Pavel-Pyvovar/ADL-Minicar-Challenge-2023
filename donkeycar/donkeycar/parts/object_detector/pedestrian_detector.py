@@ -15,7 +15,7 @@ class PedestrianDetector(object):
     This part will run a simple CNN model to detect a lego pedestrians on a zebra crossing.
     '''
 
-    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/pedestrian_detector_v2.0.tflite"
+    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/pedestrian_detection_v3.tflite"
     threshold = 0.7
 
     def __init__(self, max_reverse_count=0, reverse_throttle=-0.5):
@@ -50,6 +50,7 @@ class PedestrianDetector(object):
 
     def detect_pedestrians(self, img):
         img = self.apply_normalization(img)
+        img = img[50:, ...]
         #prediction = self.model.predict(np.array([img]))
         prediction = self.model_predict(np.array([img]))
         return prediction[0][0] > self.threshold

@@ -10,7 +10,7 @@ import urllib.request
 import tensorflow as tf
 
 
-class StopSignDetector(object):
+class CarDetector(object):
     '''
     Requires an EdgeTPU for this part to work
 
@@ -18,7 +18,7 @@ class StopSignDetector(object):
     We are just using a pre-trained model (MobileNet V2 SSD) provided by Google.
     '''
 
-    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/stop_sign_detector_v3.tflite"
+    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/car_detector_v2.tflite"
     threshold = 0.7
 
     def __init__(self, max_reverse_count=0, reverse_throttle=-0.5):
@@ -51,8 +51,9 @@ class StopSignDetector(object):
         image /= std
         return image
 
-    def detect_stop_sign(self, img):
+    def detect(self, img):
         img = self.apply_normalization(img)
+        img = img[:, img.shape[1]//2:, :]
         #prediction = self.model.predict(np.array([img]))
         prediction = self.model_predict(np.array([img]))
         return prediction[0][0] > self.threshold
@@ -61,11 +62,11 @@ class StopSignDetector(object):
         if img_arr is None:
             return throttle, img_arr
 
-        stop_signs_detected = self.detect_stop_sign(img_arr)
-        if stop_signs_detected:
-            print(f"Stop sign detected {stop_signs_detected}")
+        car_detected = self.detect(img_arr)
+        if car_detected:
+            print(f"Car detected {car_detected}")
 
-        if stop_signs_detected or self.is_reversing:
+        if car_detected or self.is_reversing:
 
             # Set the throttle to reverse within the max reverse count when detected pedestrians on a zebra crossing
             if self.reverse_count < self.max_reverse_count:
