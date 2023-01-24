@@ -18,7 +18,7 @@ class StopSignDetector(object):
     We are just using a pre-trained model (MobileNet V2 SSD) provided by Google.
     '''
 
-    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/stop_sign_detector_v3.tflite"
+    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/stop_sign_detector_v2.tflite"
     threshold = 0.7
 
     def __init__(self, max_reverse_count=0, reverse_throttle=-0.5):
@@ -57,9 +57,9 @@ class StopSignDetector(object):
         prediction = self.model_predict(np.array([img]))
         return prediction[0][0] > self.threshold
 
-    def run(self, img_arr, throttle, debug=False):
+    def run(self, img_arr, throttle):
         if img_arr is None:
-            return throttle, img_arr
+            return throttle
 
         stop_signs_detected = self.detect_stop_sign(img_arr)
         if stop_signs_detected:
@@ -71,13 +71,11 @@ class StopSignDetector(object):
             if self.reverse_count < self.max_reverse_count:
                 self.is_reversing = True
                 self.reverse_count += 1
-                # print(f"Reverse throttle {self.reverse_throttle}")
-                return self.reverse_throttle, img_arr
+                return self.reverse_throttle
             else:
                 self.is_reversing = False
-                return 0, img_arr
+                return 0
         else:
             self.is_reversing = False
             self.reverse_count = 0
-            # print(f"Last throttle {throttle}")
-            return throttle, img_arr
+            return throttle

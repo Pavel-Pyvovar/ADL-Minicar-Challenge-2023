@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import cv2
 import numpy as np
 from PIL import Image
 import glob
@@ -16,6 +17,15 @@ class BaseCamera:
 
     def run_threaded(self):
         return self.frame
+
+class ImageResizer():
+    def __init__(self, image_w=160, image_h=120):
+        self.image_w = image_w
+        self.image_h = image_h
+
+    def run(self, frame):
+        return cv2.resize(frame, (self.image_w, self.image_h))
+
 
 class PiCamera(BaseCamera):
     def __init__(self, image_w=160, image_h=120, image_d=3, framerate=20, vflip=False, hflip=False):

@@ -14,6 +14,10 @@ from .memory import Memory
 from prettytable import PrettyTable
 import traceback
 
+from donkeycar.parts.object_detector.arrow_sign_classifier import ArrowSignClassifier
+from donkeycar.parts.object_detector.stop_sign_detector import StopSignDetector
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -111,6 +115,7 @@ class Vehicle:
         """
         remove part form list
         """
+        print(self.parts)
         self.parts.remove(part)
 
     def start(self, rate_hz=10, max_loop_count=None, verbose=False):
@@ -151,7 +156,7 @@ class Vehicle:
                 start_time = time.time()
                 loop_count += 1
 
-                self.update_parts()
+                self.update_parts(loop_count)
 
                 # stop drive loop if loop_count exceeds max_loopcount
                 if max_loop_count and loop_count > max_loop_count:
@@ -176,13 +181,22 @@ class Vehicle:
         finally:
             self.stop()
 
-    def update_parts(self):
+    def update_parts(self, loop_count):
         '''
         loop over all parts
         '''
         for entry in self.parts:
 
             run = True
+
+            # Classify arrow signs only in the beginning of the track
+            if (loop_count < 150 or loop_count > 190) and isinstance(entry["part"], ArrowSignClassifier):
+                run = False
+
+            # Turn off stop sign detection on every second frame to save compute
+            if loop_count % 2 == 0 and isinstance(entry["part"], StopSignDetector):
+                run = False
+
             # check run condition, if it exists
             if entry.get('run_condition'):
                 run_condition = entry.get('run_condition')

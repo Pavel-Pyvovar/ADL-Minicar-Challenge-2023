@@ -1,1 +1,1 @@
-python manage.py drive --js --model models/pilot_22-11-03_2.tflite --type tflite_linear
+python ../mycar/manage.py drive --js --model ../mycar/models/pilot_23-01-24_0.tflite --type tflite_linear

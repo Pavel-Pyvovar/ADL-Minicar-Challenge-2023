@@ -99,6 +99,11 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
     #
     add_camera(V, cfg, camera_type)
 
+    #
+    # setup image preprocessing
+    #
+    add_image_preprocessor(V, cfg)
+
 
     # add lidar
     if cfg.USE_LIDAR:
@@ -401,6 +406,16 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
         V.add(kl, inputs=inputs, outputs=outputs, run_condition='run_pilot')
 
     #
+    # Choose a turning direction based on the arrow sign in front
+    #
+    if cfg.ARROW_SIGN_CLASSIFIER:
+        from donkeycar.parts.object_detector.arrow_sign_classifier \
+            import ArrowSignClassifier
+        V.add(ArrowSignClassifier(),
+              inputs=['cam/image_array_high_res', 'pilot/angle', "previous_arrow_detections"],
+              outputs=['pilot/angle', "previous_arrow_detections"])
+
+    #
     # stop at a stop sign
     #
     if cfg.STOP_SIGN_DETECTOR:
@@ -409,7 +424,7 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
         V.add(StopSignDetector(cfg.STOP_SIGN_MAX_REVERSE_COUNT,
                                cfg.STOP_SIGN_REVERSE_THROTTLE),
               inputs=['cam/image_array', 'pilot/throttle'],
-              outputs=['pilot/throttle', 'cam/image_array'])
+              outputs=['pilot/throttle'])
         V.add(ThrottleFilter(), 
               inputs=['pilot/throttle'],
               outputs=['pilot/throttle'])
@@ -423,7 +438,7 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
             import PedestrianDetector
         V.add(PedestrianDetector(),
               inputs=['cam/image_array', 'pilot/throttle'],
-              outputs=['pilot/throttle', 'cam/image_array'])
+              outputs=['pilot/throttle'])
         V.add(ThrottleFilter(), 
               inputs=['pilot/throttle'],
               outputs=['pilot/throttle'])
@@ -436,7 +451,7 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
             import CarDetector
         V.add(CarDetector(),
               inputs=['cam/image_array', 'pilot/throttle'],
-              outputs=['pilot/throttle', 'cam/image_array'])
+              outputs=['pilot/throttle'])
         V.add(ThrottleFilter(), 
               inputs=['pilot/throttle'],
               outputs=['pilot/throttle'])
@@ -460,7 +475,7 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None,
                     user_angle, user_throttle,
                     pilot_angle, pilot_throttle):
             if mode == 'user':
-                user_throttle = 0
+                # user_throttle = 0
                 return user_angle, user_throttle
 
             elif mode == 'local_angle':
@@ -759,6 +774,14 @@ def get_camera(cfg):
     return cam
 
 
+def add_image_preprocessor(V, cfg):
+    from donkeycar.parts.camera import ImageResizer
+    inputs = ['cam/image_array_high_res']
+    outputs = ['cam/image_array']
+    preprocessor = ImageResizer(cfg.IMAGE_W_LOW_RES, cfg.IMAGE_H_LOW_RES)
+    V.add(preprocessor, inputs=inputs, outputs=outputs)
+
+
 def add_camera(V, cfg, camera_type):
     """
     Add the configured camera to the vehicle pipeline.
@@ -804,7 +827,8 @@ def add_camera(V, cfg, camera_type):
               threaded=True)
     else:
         inputs = []
-        outputs = ['cam/image_array']
+        # outputs = ['cam/image_array']
+        outputs = ['cam/image_array_high_res']
         threaded = True
         cam = get_camera(cfg)
         if cam:

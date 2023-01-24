@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import time
 import random
-import collections
+from collections import deque
 from PIL import Image
 from matplotlib import cm
 import os
@@ -10,15 +10,12 @@ import urllib.request
 import tensorflow as tf
 
 
-class CarDetector(object):
+class ArrowSignClassifier(object):
     '''
-    Requires an EdgeTPU for this part to work
-
-    This part will run a EdgeTPU optimized model to run object detection to detect a stop sign.
-    We are just using a pre-trained model (MobileNet V2 SSD) provided by Google.
+    Class for arrow sign classifier
     '''
 
-    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/car_detector_v4.tflite"
+    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/arrow_sign_classifier.tflite"
     threshold = 0.7
 
     def __init__(self, max_reverse_count=0, reverse_throttle=-0.5):
@@ -51,33 +48,40 @@ class CarDetector(object):
         image /= std
         return image
 
-    def detect(self, img):
+    def detect_arrow_sign(self, img):
         img = self.apply_normalization(img)
-        img = img[50:, img.shape[1]//2:, :]
+        img = img[160:-160, ...]
         prediction = self.model_predict(np.array([img]))
         return prediction[0][0] > self.threshold
 
-    def run(self, img_arr, throttle):
+    def run(self, img_arr, angle, previous_arrow_detections=None):
         if img_arr is None:
-            return throttle
+            return angle, previous_arrow_detections
 
-        car_detected = self.detect(img_arr)
-        if car_detected:
-            print(f"Car detected {car_detected}")
+        if angle is None:
+            angle = 0
 
-        if car_detected or self.is_reversing:
+        turn_right = self.detect_arrow_sign(img_arr)
 
-            # Set the throttle to reverse within the max reverse count when detected pedestrians on a zebra crossing
-            if self.reverse_count < self.max_reverse_count:
-                self.is_reversing = True
-                self.reverse_count += 1
-                # print(f"Reverse throttle {self.reverse_throttle}")
-                return self.reverse_throttle
-            else:
-                self.is_reversing = False
-                return 0
+        if previous_arrow_detections is None:
+            previous_arrow_detections = deque([turn_right])
+
+        if 1 < len(previous_arrow_detections) < 5:
+            previous_arrow_detections.append(turn_right)
         else:
-            self.is_reversing = False
-            self.reverse_count = 0
-            # print(f"Last throttle {throttle}")
-            return throttle
+            previous_arrow_detections.popleft()
+            previous_arrow_detections.append(turn_right)
+
+        if sum(previous_arrow_detections) == 5:
+            turn_right = True
+        elif sum(previous_arrow_detections) == 0:
+            turn_right = False
+
+        if turn_right:
+            print(f"Turn to the right!")
+            angle += 0.2
+        else:
+            print(f"Turn to the left!")
+            angle -= 0.2
+
+        return angle, previous_arrow_detections

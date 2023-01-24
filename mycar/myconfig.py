@@ -45,8 +45,10 @@ AUTO_CREATE_NEW_TUB = True
 # 
 # #CAMERA
 # CAMERA_TYPE = "PICAM"   # (PICAM|WEBCAM|CVCAM|CSIC|V4L|D435|MOCK|IMAGE_LIST)
-# IMAGE_W = 160
-# IMAGE_H = 120
+IMAGE_W = 160*4
+IMAGE_H = 120*4
+IMAGE_W_LOW_RES = 160
+IMAGE_H_LOW_RES = 120
 # IMAGE_DEPTH = 3         # default RGB=3, make 1 for mono
 # CAMERA_FRAMERATE = DRIVE_LOOP_HZ
 # CAMERA_VFLIP = False
@@ -408,7 +410,7 @@ AUTO_CREATE_NEW_TUB = True
 # 
 # # Augmentations and Transformations
 AUGMENTATIONS = ["MULTIPLY", "BLUR"]
-# TRANSFORMATIONS = []
+TRANSFORMATIONS = ["CROP"]
 # # Settings for brightness and blur, use 'MULTIPLY' and/or 'BLUR' in
 # # AUGMENTATIONS
 AUG_MULTIPLY_RANGE = (0.5, 3.0)
@@ -635,11 +637,13 @@ STOP_SIGN_SHOW_BOUNDING_BOX = False
 STOP_SIGN_MAX_REVERSE_COUNT = 10    # How many times should the car reverse when detected a stop sign, set to 0 to disable reversing
 STOP_SIGN_REVERSE_THROTTLE = -0.5     # Throttle during reversing when detected a stop sign
 
+ARROW_SIGN_CLASSIFIER = False
+
 # Pedestrian Detector
-PEDESTRIAN_DETECTOR = False
+PEDESTRIAN_DETECTOR = True
 
 # Car Detector
-CAR_DETECTOR = False
+CAR_DETECTOR = True
 #
 # # FPS counter
 SHOW_FPS = True

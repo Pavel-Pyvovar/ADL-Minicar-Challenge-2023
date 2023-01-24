@@ -15,7 +15,7 @@ class PedestrianDetector(object):
     This part will run a simple CNN model to detect a lego pedestrians on a zebra crossing.
     '''
 
-    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/pedestrian_detection_v3.tflite"
+    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/pedestrian_detector_v8.tflite"
     threshold = 0.7
 
     def __init__(self, max_reverse_count=0, reverse_throttle=-0.5):
@@ -51,13 +51,12 @@ class PedestrianDetector(object):
     def detect_pedestrians(self, img):
         img = self.apply_normalization(img)
         img = img[50:, ...]
-        #prediction = self.model.predict(np.array([img]))
         prediction = self.model_predict(np.array([img]))
         return prediction[0][0] > self.threshold
 
-    def run(self, img_arr, throttle, debug=False):
+    def run(self, img_arr, throttle):
         if img_arr is None:
-            return throttle, img_arr
+            return throttle
 
         pedestrians_detected = self.detect_pedestrians(img_arr)
         if pedestrians_detected:
@@ -69,13 +68,11 @@ class PedestrianDetector(object):
             if self.reverse_count < self.max_reverse_count:
                 self.is_reversing = True
                 self.reverse_count += 1
-                # print(f"Reverse throttle {self.reverse_throttle}")
-                return self.reverse_throttle, img_arr
+                return self.reverse_throttle
             else:
                 self.is_reversing = False
-                return 0, img_arr
+                return 0
         else:
             self.is_reversing = False
             self.reverse_count = 0
-            # print(f"Last throttle {throttle}")
-            return throttle, img_arr
+            return throttle
