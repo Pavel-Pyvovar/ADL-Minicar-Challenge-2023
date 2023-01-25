@@ -18,7 +18,7 @@ class StopSignDetector(object):
     We are just using a pre-trained model (MobileNet V2 SSD) provided by Google.
     '''
 
-    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/stop_sign_detector_v2.tflite"
+    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/stop_sign_detector_v3.tflite"
     threshold = 0.7
 
     def __init__(self, max_reverse_count=0, reverse_throttle=-0.5):
