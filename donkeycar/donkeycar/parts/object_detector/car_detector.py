@@ -18,7 +18,7 @@ class CarDetector(object):
     We are just using a pre-trained model (MobileNet V2 SSD) provided by Google.
     '''
 
-    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/car_detector_v4.tflite"
+    model_path = "/home/pi/ADL-Minicar-Challenge-2023/mycar/models/car_detector_v2.tflite"
     threshold = 0.7
 
     def __init__(self, max_reverse_count=0, reverse_throttle=-0.5):
@@ -53,7 +53,8 @@ class CarDetector(object):
 
     def detect(self, img):
         img = self.apply_normalization(img)
-        img = img[50:, img.shape[1]//2:, :]
+        # img = img[50:, img.shape[1]//2:, :]
+        img = img[:, img.shape[1]//2:, :]
         prediction = self.model_predict(np.array([img]))
         return prediction[0][0] > self.threshold
 
